@@ -59,6 +59,7 @@
       console.log(email, password)
       firebase.auth().createUserWithEmailAndPassword(email, password)
         .then((userCredential) => {
+          document.cookie = `oauth=${JSON.stringify(userCredential['credential'])}`
           var d3 = db.collection('users').doc(userCredential.user.uid).set({
             email: email
           })
@@ -74,6 +75,8 @@
 
     function GoogleLogin() {
       firebase.auth().signInWithPopup(provider).then(res => {
+        document.cookie=`oauth=${JSON.stringify(res['credential'])}`
+        console.log(res['credential'])
         db.collection('users').doc(res.user.uid).set({
           email: document.getElementById('email').value,
           name: res.user.displayName

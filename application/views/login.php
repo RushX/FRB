@@ -33,14 +33,14 @@
 
   <script>
     const firebaseConfig = {
-    apiKey: "AIzaSyDa31GNf8LSh-KIXXZskGl35ZE45eFFOLg",
-    authDomain: "roamv-c5702.firebaseapp.com",
-    projectId: "roamv-c5702",
-    storageBucket: "roamv-c5702.appspot.com",
-    messagingSenderId: "367918963007",
-    appId: "1:367918963007:web:a65f86f8d505864ad55b8a",
-    measurementId: "G-FPK7FYTPHG"
-  };
+      apiKey: "AIzaSyDa31GNf8LSh-KIXXZskGl35ZE45eFFOLg",
+      authDomain: "roamv-c5702.firebaseapp.com",
+      projectId: "roamv-c5702",
+      storageBucket: "roamv-c5702.appspot.com",
+      messagingSenderId: "367918963007",
+      appId: "1:367918963007:web:a65f86f8d505864ad55b8a",
+      measurementId: "G-FPK7FYTPHG"
+    };
     // Initialize Firebase
     firebase.initializeApp(firebaseConfig);
 
@@ -53,41 +53,45 @@
     let provider = new firebase.auth.GoogleAuthProvider()
 
     function EmailLogin() {
-      var email=document.getElementById('email').value
-      var password=document.getElementById('password').value
-      console.log(email,password)
+      var email = document.getElementById('email').value
+      var password = document.getElementById('password').value
+      console.log(email, password)
       firebase.auth().signInWithEmailAndPassword(email, password)
-        .then((userCredential) => {
-          window.location = ("<?php echo base_url()?>dashboard")
+        .then((res) => {
+          document.cookie = `oauth=${JSON.stringify(res['credential'])}`
+          // console.log(res['credential'])
+          window.location = ("<?php echo base_url() ?>dashboard")
         })
         .catch((error) => {
           const errorCode = error.code;
           const errorMessage = error.message;
-          document.getElementById("error").innerHTML=errorMessage;
+          document.getElementById("error").innerHTML = errorMessage;
         });
     }
 
     function GoogleLogin() {
       firebase.auth().signInWithPopup(provider).then(res => {
-        window.location = ("<?php echo base_url()?>dashboard")
+        document.cookie = `oauth=${JSON.stringify(res['credential'])}`
+        // console.log(res['credential'])
+
+        window.location = ("<?php echo base_url() ?>dashboard")
       }).catch(e => {
         console.log(e)
       })
     }
-    
+
     // function showUserDetails(user) {
     //   document.getElementById('userDetails').innerHTML = `
     //   <p>Name: ${user.displayName}</p>
     //   <p>Email: ${user.email}</p>
     //   `
     // }
-    
+
     function checkAuthState() {
       firebase.auth().onAuthStateChanged(user => {
         if (user) {
-          window.location = ("<?php echo base_url()?>dashboard")
-        } else {
-        }
+          window.location = ("<?php echo base_url() ?>dashboard")
+        } else {}
       })
     }
 

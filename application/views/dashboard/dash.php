@@ -7,6 +7,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://fonts.googleapis.com/css?family=Lato&display=swap" rel="stylesheet" />
     <!-- <link href="/your-path-to-uicons/css/uicons-rounded-solid.css" rel="stylesheet"> -->
+    <link rel="stylesheet" href="https://code.ionicframework.com/ionicons/2.0.1/css/ionicons.min.css">
+
     <link rel='stylesheet' href='https://cdn-uicons.flaticon.com/uicons-regular-straight/css/uicons-regular-straight.css'>
     <link rel='stylesheet' href='<?php echo base_url() ?>assets/css/dashboard.css'>
     <script src="https://code.jquery.com/jquery-3.6.3.js" integrity="sha256-nQLuAZGRRcILA+6dMBOvcRh5Pe310sBpanc6+QBmyVM=" crossorigin="anonymous"></script>
@@ -232,8 +234,7 @@
                 document.getElementById('modal_add_device').style="display:block";
                 var ele=document.getElementById('right').classList.add("right_active")
             }
-
-            
+          
             // window.addEventListner('addDevice',()=>{
             // })
             function showModalDeviceInfo(){
@@ -344,7 +345,6 @@
                                 if (doc.exists) {
                                     // console.log("Document data:", doc.data());
                                     var data = doc.data();
-                                    console.log(data);
                                     
                                     $('#devices').append(`<div class="devices">
                             <div class="devices_upper">
@@ -356,6 +356,7 @@
                             <div class="imei">IMEI No.:${data.imei}</div>
                             </div>
                             </div>
+                            <ion-icon name="trash-outline" onclick="deleteImei(${data.imei})"></ion-icon>
                             </div>
                             
                             <div class="devices_lower">
@@ -393,44 +394,154 @@
                 const user = firebase.auth().currentUser;
                 return user.uid;
             }
+    //         function deleteImei(imei){
+    //             var intimei=parseInt(imei)
+    //             const query = db.collection('imei').where('imei', 'array-contains', intimei);
+    //             query.get().then((querySnapshot) => {
+    //                 console.log(querySnapshot)
+    //             querySnapshot.forEach((doc) => {
+    //                 // Using 'FieldValue.arrayRemove()' method to remove the value from the 'imei' array
+    //                 const updatedImeiArray = firebase.firestore.FieldValue.arrayRemove(intimei);
+    //                 doc.ref.update({ imei: updatedImeiArray });
+    //             });
+    //             });
+    //     //         return new Promise(function (resolve, reject) {
+    //     // const query = db.collection('imei').where('imei', 'array-contains', intimei);
+
+    //     // // Get the first document in the query results
+    //     // query.get().then(async (querySnapshot) => {
+    //     //     if (!querySnapshot.empty) {
+    //     //         // If a document was found, get the collection name
+    //     //         const uid = await querySnapshot.docs[0].ref.id;
+    //     //         resolve(uid.trim());
+    //     //     } else {
+    //     //         reject(2);
+    //     //     }
+    //     // }).catch((error) => {
+    //     //     reject(error);
+    //     // });
+    // // })
+    //         }
+            
+    function deleteImei(imei) {
+		var intimei = parseInt(imei);
+        const query = db.collection('imei').doc('g2Ydj1FhP8fk5vzqNFXdFQ5uXwc2');
+        const collectionRef = db.collection('imei');
+        const uid=getUid().then(function (uid) {
+        const documentRef = collectionRef.doc(uid);
+        const del=deleteDocumentByImei(`users/${uid}/devices`,intimei).then(
+            getImei(uid)
+        )
+        return db.runTransaction(async (transaction) => {
+        const documentSnapshot = await transaction.get(documentRef);
+
+        if (!documentSnapshot.exists) {
+        throw new Error(`Document ${documentId} does not exist`);
+        }
+
+        const array = documentSnapshot.get('imei');
+        console.log(array)
+
+        if (!Array.isArray(array)) {
+        throw new Error(`Field ${fieldName} is not an array`);
+        }
+
+        // Find the index of the element to be deleted
+        const index = array.indexOf(imei);
+
+        if (index === -1) {
+        // The element is not in the array, so no need to delete it
+        return;
+        }
+
+        // Create a new array with the element removed
+        const newArray = [...array.slice(0, index), ...array.slice(index + 1)];
+
+        // Update the document with the new array
+        transaction.update(documentRef, { imei: newArray });
+    });
+})
+
+
+        // query.get().then((doc) => {
+        // if (doc.exists) {
+        //     const myArray = doc.data().imei;
+        //     console.log(myArray); // This will log the array to the console
+        // } else {
+        //     console.log('Document does not exist');
+        // }
+        // }).catch((error) => {
+        // console.log('Error getting document:', error);
+        // });
+
+
+
+
+	}
+
+    async function deleteDocumentByImei(collectionName, imei) {
+        const collectionRef = db.collection(collectionName).where('imei', '==', (imei));
+        // // Use a Firestore transaction to ensure atomicity
+            // Find the document with the matching IMEI field
+            collectionRef.where('imei', '==', (imei)).get().then((doc)=>{
+                var documentRef=doc.docs[0].ref;
+                console.log(doc.docs[0].ref.delete())
+                
+            });
+}
+
+
+
             async function addImei(imei){
                 
                 // var uid=getUid()
                 document.getElementById('modal_loading').style="display:flex";
                 imei=parseInt(imei)
-                addDetails();
                 var uid = await getUid().then(function (response) {
 			var url=`imei`;
 			usercoll = db.collection(url).doc(response).update({
-            imei: firebase.firestore.FieldValue.arrayUnion(imei)
-        }).catch((error)=>{
-			usercoll = db.collection(url).doc(response).set({
-            imei: firebase.firestore.FieldValue.arrayUnion(imei)
-        })})
-        document.getElementById('loader').style="display:none";
-        document.getElementById('success').style="display:flex";
-        document.getElementById('imei').value="";
-        setTimeout(() => {
-            document.getElementById('modal_loading').style="display:none";
-        }, 3000);
-			console.log(usercoll)
+                imei: firebase.firestore.FieldValue.arrayUnion(imei)
+            }).catch((error)=>{
+                usercoll = db.collection(url).doc(response).set({
+                    imei: firebase.firestore.FieldValue.arrayUnion(imei)
+                    // console.log(Response)
+                })
+
+                
+            })
+                 addDetails().then(()=>{
+
+                var up=getUid().then(function (response) {
+                    getImei(response)
+                })
+                document.getElementById('loader').style="display:none";
+                document.getElementById('success').style="display:flex";
+                document.getElementById('imei').value="";
+                document.getElementById('snum').value="";
+                document.getElementById('pnum').value="";
+                document.getElementById('name').value="";
+                setTimeout(() => {
+                    document.getElementById('modal_loading').style="display:none";
+                }, 3000);
+            });
+			// console.log(usercoll)
 		});
             }
             async function addDetails(){ {
-		var now = new Date();
-		// Create a new message object with the user's name, message, and timestamp
-		var message = {
-			imei: parseInt(document.getElementById('imei').value),
-			name: document.getElementById('name').value,
-			snum: parseInt(document.getElementById('snum').value),
-			pnum: parseInt(document.getElementById('pnum').value)
-		};
-		var uid = await getUid().then(function (response) {
-			var url=`users/${response}/devices/`;
-			usercoll = db.collection(url).doc().set(message)
-			console.log(usercoll)
-            
-		});
+                var now = new Date();
+                // Create a new message object with the user's name, message, and timestamp
+                var message = {
+                    imei: parseInt(document.getElementById('imei').value),
+                    name: document.getElementById('name').value,
+                    snum: parseInt(document.getElementById('snum').value),
+                    pnum: parseInt(document.getElementById('pnum').value)
+                };
+                var uid = await getUid().then(function (response) {
+                    var url=`users/${response}/devices/`;
+                    usercoll = db.collection(url).doc().set(message)
+                    console.log(usercoll)
+                    
+                });
 	};
 }
         
@@ -447,7 +558,8 @@ firebase.auth().onAuthStateChanged( (user) => {
             })
     </script>
 
-    
+<script type="module" src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.esm.js"></script>
+<script nomodule src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.js"></script>
 </body>
 
 </html>

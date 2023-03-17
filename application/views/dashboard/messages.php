@@ -6,6 +6,8 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Messages</title>
+    <link rel="stylesheet" href="https://code.ionicframework.com/ionicons/2.0.1/css/ionicons.min.css">
+    <link rel='stylesheet' href='https://cdn-uicons.flaticon.com/uicons-regular-straight/css/uicons-regular-straight.css'>
     <link href="https://fonts.googleapis.com/css?family=Lato&display=swap" rel="stylesheet" />
     <!-- <link href="/your-path-to-uicons/css/uicons-rounded-solid.css" rel="stylesheet"> -->
     <link rel='stylesheet' href='https://cdn-uicons.flaticon.com/uicons-regular-straight/css/uicons-regular-straight.css'>
@@ -208,6 +210,14 @@
         }
     </style>
     <style>
+        #menu {
+            display: none;
+            position: absolute;
+            background-color: #f1f1f1;
+            border: 1px solid #d3d3d3;
+            padding: 12px 16px;
+        }
+
         article,
         aside,
         details,
@@ -494,6 +504,9 @@ message-area
         .msg-head {
             padding: 15px;
             border-bottom: 1px solid #ccc;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
         }
 
         .moreoption {
@@ -961,9 +974,10 @@ message-area
                                         </div>
                                     </div>
                                 </div>
+                                <ion-icon name="options-outline"></ion-icon>
                             </div>
 
-                            <div class="modal-body" >
+                            <div class="modal-body">
                                 <div class="msg-body" style='height: 700px;'>
                                     <ul id="msg-body">
                                         <!-- <li class="sender">
@@ -1026,8 +1040,12 @@ message-area
             </div>
             <input type="text" id="imeihold" hidden>
             <input type="text" id="phonehold" hidden>
-            
 
+
+        </div>
+        <div id="menu">
+            <a href="#" id="deleteChat">Delete Chat</a>
+            <input hidden id="deleteChatRef" value="">
         </div>
         <!-- <?php $this->load->view('components/auth'); ?> -->
         <script>
@@ -1094,21 +1112,21 @@ message-area
 
             function sendMessage() {
                 $.ajax({
-                        type: "POST",
-                        url: "<?php echo site_url()?>api/v1/sendMessage",
-                        data: {
-                            "imei": $('#imeihold').val(),
-                            "number": $('#phonehold').val(),
-                            "message": `${$('#message').val()}`,
-                            "type": 1
-                        }
-                    ,
+                    type: "POST",
+                    url: "<?php echo site_url() ?>api/v1/sendMessage",
+                    data: {
+                        "imei": $('#imeihold').val(),
+                        "number": $('#phonehold').val(),
+                        "message": `${$('#message').val()}`,
+                        "type": 1
+                    },
                     success: $('.sendbox').empty()
                 });
             }
-            function closeModal(v){
-                $(`#${v}`).attr('hidden',true);
-                
+
+            function closeModal(v) {
+                $(`#${v}`).attr('hidden', true);
+
             }
 
             var now = new Date();
@@ -1148,7 +1166,7 @@ message-area
             }
 
             function showMessages(number, imei) {
-                $('#chatbox').attr('hidden',false)
+                $('#chatbox').attr('hidden', false)
                 document.getElementById('chatbox').style = "display:block";
                 $('#msg-body').empty()
                 $('#imeihold').val(imei)
@@ -1187,12 +1205,12 @@ message-area
                 snapshot.forEach(function(doc) {
                     // Create a new message element and add it to the messages div
                     var message = doc.data();
-                    listarr[`${message.number}`]=(message)
-        
+                    listarr[`${message.number}`] = (message)
+
                 })
                 console.log(listarr)
-               for (const message in listarr) {
-                    $('#scrollable').append(`<div class="message_layout" onclick=showMessages(${listarr[message].number},${listarr[message].imei})>
+                for (const message in listarr) {
+                    $('#scrollable').append(`<div class="message_layout" oncontextmenu=showOptsfor(${listarr[message].imei})  onclick=showMessages(${listarr[message].number},${listarr[message].imei})>
                     <div class="message_main">
                     <div class="user_img small"></div>
                     <div class="message_data">
@@ -1210,28 +1228,68 @@ message-area
                     
                     <img src="<?php echo base_url() ?>assets/images/arrow.svg" width='15px' height="15px" class="simimg">
                     </div>
-                    </div>`)}
+                    </div>`)
+                }
             }
-            function newChat(){
-                $('#chatbox').attr('hidden',true)
+
+            function newChat() {
+                $('#chatbox').attr('hidden', true)
                 $('#modal_create_message').removeAttr('hidden');
 
             }
-            function sendNew(){
+
+            function showOptsfor(imei) {
+                const menu = document.getElementById("menu");
+                event.preventDefault(); 
+                const delId = document.getElementById("deleteChatRef");
+                delId.value = imei
+                menu.style.display = "block"; // show the menu
+                menu.style.left = event.pageX + "px"; // position the menu
+                menu.style.top = event.pageY + "px";
+            }
+
+
+            $('#deleteChat').click((event) => {
+                event.preventDefault(); 
+                imei = $('#deleteChatRef').val()
+                uidCall.then((uid) => {
+                    const collectionRef = db.collection(`users/${uid}/imei/${imei}/messages`);
+                    
+                    const query = collectionRef.where("imei", "==", parseInt(imei));
+                    
+                    query.get().then((querySnapshot) => {
+                        console.log(querySnapshot);
+                        querySnapshot.forEach((doc) => {
+                            doc.ref.delete().then(() => {
+                                console.log("Document successfully deleted!");
+                            }).catch((error) => {
+                                console.error("Error removing document: ", error);
+                            });
+                        });
+                    }).catch((error) => {
+                        console.error("Error getting documents: ", error);
+                    });
+
+                })
+            })
+
+            function sendNew() {
                 $.ajax({
-                        type: "POST",
-                        url: "<?php echo site_url()?>api/v1/sendMessage",
-                        data: {
-                            "imei": $('#devices').val(),
-                            "number": $('#reciepent').val(),
-                            "message": `${$('#messagenew').val()}`,
-                            "type": 1
-                        }
-                    ,
+                    type: "POST",
+                    url: "<?php echo site_url() ?>api/v1/sendMessage",
+                    data: {
+                        "imei": $('#devices').val(),
+                        "number": $('#reciepent').val(),
+                        "message": `${$('#messagenew').val()}`,
+                        "type": 1
+                    },
                     success: $('.sendbox').empty()
                 });
             }
         </script>
+
+        <script type="module" src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.esm.js"></script>
+        <script nomodule src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.js"></script>
     </div>
     </div>
 </body>

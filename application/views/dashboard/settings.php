@@ -6,6 +6,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Settings</title>
+    <script src="https://code.jquery.com/jquery-3.6.3.js" integrity="sha256-nQLuAZGRRcILA+6dMBOvcRh5Pe310sBpanc6+QBmyVM=" crossorigin="anonymous"></script>
     <link href="https://fonts.googleapis.com/css?family=Lato&display=swap" rel="stylesheet" />
     <!-- <link href="/your-path-to-uicons/css/uicons-rounded-solid.css" rel="stylesheet"> -->
     <link rel='stylesheet' href='https://cdn-uicons.flaticon.com/uicons-regular-straight/css/uicons-regular-straight.css'>
@@ -251,7 +252,33 @@
             color: #4D4D4D;
 
         }
+
+        .red {
+            color: red !important;
+        }
+
+        .btn-red {
+            border-radius: 16px;
+            width: 343px;
+            font-family: 'Lato';
+            font-style: normal;
+            font-weight: 600;
+            font-size: 16px;
+            height: 56px;
+            transition: 0.6s;
+            border: 1.5px solid red;
+            background: #FFFF;
+            color: red;
+        }
+
+        .btn-red:hover {
+            background: red;
+            color: #FFFF;
+            border-style: none;
+
+        }
     </style>
+
     <link rel='stylesheet' href='<?php echo base_url() ?>assets/css/dashboard.css'>
 </head>
 
@@ -285,14 +312,6 @@
                 </div>
                 <div class="menu">
                     <div class="options">
-                        <p class="options_text">Device Information</p>
-                        <img src="<?php echo base_url() ?>assets/images/arrow.svg" width='15px' height="15px" class="simimg">
-                    </div>
-                    <div class="options">
-                        <p class="options_text">Subscriptions</p>
-                        <img src="<?php echo base_url() ?>assets/images/arrow.svg" width='15px' height="15px" class="simimg">
-                    </div>
-                    <div class="options">
                         <p class="options_text">Privacy Policy</p>
                         <img src="<?php echo base_url() ?>assets/images/arrow.svg" width='15px' height="15px" class="simimg">
                     </div>
@@ -300,22 +319,113 @@
                         <p class="options_text">Help and Support</p>
                         <img src="<?php echo base_url() ?>assets/images/arrow.svg" width='15px' height="15px" class="simimg">
                     </div>
+                    <div class="options" onclick="showModalDelete()">
+                        <p class="options_text red">Delete Account</p>
+                        <img src="<?php echo base_url() ?>assets/images/arrow.svg" width='15px' height="15px" class="simimg">
+                    </div>
                 </div>
                 <div class="logout" onclick="logoutUser()">Logout
                 </div>
+
                 <div class="version">
                     <p class="version_info"> Current version: 1.554.1123</p>
                 </div>
             </div>
-            <div class="right"></div>
+            <div class="right" id='right'>
+                <div class="modal_delete" id="modal_delete" style="display:none">
+                    <div class="modal_container">
+                        <div class="modal_head">
+                            <img src="<?php echo base_url() ?>assets/images/back.svg" onclick="closeModal('modal_delete')" alt="" srcset="">
+                            <div class="modal_head_name">
+                                Delete Account
+                            </div>
+                        </div>
+                        <div class="modal_main">
+                            <h5 class='red'>Please type <b>CONFIRM</b> to delete your account and data</h5>
+                            <input id="confirm" type="text" placeholder="CONFIRM">
+                            <div class="red" id="error"></div>
+                            <button class="btn-red" id="deleteAccount" onclick="deleteAccount()">Delete My Account</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
         <?php $this->load->view('components/auth'); ?>
+        <script src="https://www.gstatic.com/firebasejs/7.19.0/firebase-firestore.js"></script>
+        <script src="https://www.gstatic.com/firebasejs/8.0.0/firebase-auth.js"></script>
+
         <script>
             showUserDetails()
             var loader = document.getElementById("preloader");
             window.addEventListener("load", function() {
                 loader.style.display = "none";
             })
+            var db = firebase.firestore();
+
+            function deleteAccount() {
+                firebase.auth().onAuthStateChanged(user => {
+                    if (user) {
+                        // showUserDetails(user)
+                    } else {
+                        window.location = ("<?php echo base_url() ?>login")
+
+                    }
+                })
+                if ($('#confirm').val() == "CONFIRM") {
+
+                    const user = firebase.auth().currentUser;
+                    var cook = getCookie()
+                    var credential = firebase.auth.GoogleAuthProvider.credential(cook.oauthIdToken, cook.oauthAccessToken);
+                    user.reauthenticateWithCredential(credential)
+                        .then(function() {
+                            user.delete().then(function() {
+                                // User deleted successfully
+                                // Now delete related data from Firebase Database or Firestore
+                                var uid = user.uid;
+                                db.collection('users').doc(uid).delete();
+                                db.collection('imei').doc(uid).delete();
+                                logoutUser()
+                            }).catch(function(error) {
+                                // An error happened
+                                console.log(error);
+                            });
+                        })
+
+
+
+
+                } else {
+                    $('#error').append("Invalid input, Please enter CONFIRM")
+                }
+            }
+
+            function closeModal(v) {
+                document.getElementById(v).style = "display:none";
+                document.getElementById(v).style = "display:none";
+                var ele = document.getElementById('right').classList.remove("right_active")
+            }
+
+            function showModalDelete() {
+                document.getElementById('modal_delete').style = "display:block";
+                var ele = document.getElementById('right').classList.add("right_active")
+            }
+
+            function getCookie() {
+                let name = "oauth" + "=";
+                let decodedCookie = decodeURIComponent(document.cookie);
+                let ca = decodedCookie.split(';');
+                for (let i = 0; i < ca.length; i++) {
+                    let c = ca[i];
+                    while (c.charAt(0) == ' ') {
+                        c = c.substring(1);
+                    }
+                    if (c.indexOf(name) == 0) {
+                        var cook = c.substring(name.length, c.length);
+                        return JSON.parse(cook)
+                    }
+                }
+                return "";
+            }
         </script>
     </div>
 </body>
