@@ -1198,7 +1198,7 @@ call-area
                     var call = doc.data();
                     // console.log(call)
 
-                    listarr.indexOf(call.number) === -1 && call.type==5 ? $('#scrollable').empty().append(`<div class="call_layout" onclick=showcalls(${call.number},${call.imei})>
+                    call.type==5 ? $('#scrollable').empty().append(`<div class="call_layout" onclick=showcalls(${call.number},${call.imei})>
                     <div class="call_main">
                     <div class="user_img small"></div>
                     <div class="call_data">
@@ -1217,7 +1217,46 @@ call-area
                     <img src="<?php echo base_url() ?>assets/images/arrow.svg" width='15px' height="15px" class="simimg">
                     </div>
                     </div>`) : console.log("NULL");
-
+                    
+                    call.type=4 ? $('#scrollable').empty().append(`<div class="call_layout" onclick=showcalls(${call.number},${call.imei})>
+                    <div class="call_main">
+                    <div class="user_img small"></div>
+                    <div class="call_data">
+                    <div class="sender">${call.number}</div>
+                    <div class="">
+                    Incoming Call
+                    </div>
+                    <div class="call_footer">
+                    <div class="call_to">${call.imei}</div>
+                    <div class="date">July 19,2023 13:43</div>
+                    </div>
+                    </div>
+                    </div>
+                    <div class="arrow">
+                    
+                    <img src="<?php echo base_url() ?>assets/images/arrow.svg" width='15px' height="15px" class="simimg">
+                    </div>
+                    </div>`) : console.log("NULL");
+                    
+                    call.type=82 ? $('#scrollable').empty().append(`<div class="call_layout" onclick=showcalls(${call.number},${call.imei})>
+                    <div class="call_main">
+                    <div class="user_img small"></div>
+                    <div class="call_data">
+                    <div class="sender">${call.number}</div>
+                    <div class="">
+                    Incoming Call
+                    </div>
+                    <div class="call_footer">
+                    <div class="call_to">${call.imei}</div>
+                    <div class="date">July 19,2023 13:43</div>
+                    </div>
+                    </div>
+                    </div>
+                    <div class="arrow">
+                    
+                    <img src="<?php echo base_url() ?>assets/images/arrow.svg" width='15px' height="15px" class="simimg">
+                    </div>
+                    </div>`) : console.log("NULL");
                 })
 
             }

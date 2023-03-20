@@ -178,7 +178,7 @@
             font-family: 'Lato';
             font-style: normal;
             font-weight: 400;
-            font-size: 14px;
+            font-size: 13px;
             line-height: 110%;
             /* or 15px */
 
@@ -906,6 +906,18 @@ message-area
                 border-bottom-left-radius: 6px;
             }
         }
+
+        /* Chrome, Safari, Edge, Opera */
+        input::-webkit-outer-spin-button,
+        input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        /* Firefox */
+        input[type=number] {
+            -moz-appearance: textfield;
+        }
     </style>
     <link rel='stylesheet' href='<?php echo base_url() ?>assets/css/dashboard.css'>
     <script>
@@ -974,7 +986,7 @@ message-area
                                         </div>
                                     </div>
                                 </div>
-                                <ion-icon name="options-outline"></ion-icon>
+                                <!-- <ion-icon name="options-outline"></ion-icon?> -->
                             </div>
 
                             <div class="modal-body">
@@ -1016,8 +1028,8 @@ message-area
                                 </div>
                             </div>
                             <div class="modal-body modal_main">
-                                <label for="reciepent">Reciepent</label>
-                                <input type="text" id="reciepent" placeholder="Select Reciepients">
+                                <label for="reciepent">Reciepent (Without 91) </label>
+                                <input type="number" id="reciepent" placeholder="Reciepients">
 
                                 <label for="device"> Select Device</label>
                                 <select type="text" id="devices" placeholder="Select Device To Send From">
@@ -1045,7 +1057,8 @@ message-area
         </div>
         <div id="menu">
             <a href="#" id="deleteChat">Delete Chat</a>
-            <input hidden id="deleteChatRef" value="">
+            <input hidden id="deleteChatRefImei" value="">
+            <input hidden id="deleteChatRefNumber" value="">
         </div>
         <!-- <?php $this->load->view('components/auth'); ?> -->
         <script>
@@ -1131,7 +1144,7 @@ message-area
 
             var now = new Date();
             var cr = imeis.then((iarr) => {
-                $('#scrollable').empty();
+                // $('#scrollable').empty();
                 iarr.forEach((imei) => {
                     $('#devices').append(`<option value="${imei}">${imei}</option>`)
                     uidCall.then((uid) => {
@@ -1148,7 +1161,7 @@ message-area
 
             function timestampToTime(timestamp) {
 
-                var date = new Date(timestamp * 1000); // Convert timestamp to milliseconds and create a new Date object
+                var date = new Date(timestamp); // Convert timestamp to milliseconds and create a new Date object
                 var hours = date.getHours(); // Get hours (0-23)
                 var minutes = date.getMinutes(); // Get minutes (0-59)
 
@@ -1199,6 +1212,19 @@ message-area
 
             }
 
+            function getDT(ts) {
+                var currentTime = new Date();
+                currentTime.setTime(ts);
+                var currentOffset = currentTime.getTimezoneOffset();
+                var ISTOffset = 330; // IST offset UTC +5:30 
+                var ISTTime = new Date(currentTime.getTime() + (ISTOffset + currentOffset) * 60000);
+                // ISTTime now represents the time in IST coordinates
+
+                var hoursIST = ISTTime.getHours()
+                var minutesIST = ISTTime.getMinutes()
+                console.log(ts)
+                return currentTime.toString();
+            }
 
             function loadChats(snapshot) {
                 listarr = []
@@ -1208,19 +1234,21 @@ message-area
                     listarr[`${message.number}`] = (message)
 
                 })
-                console.log(listarr)
+
                 for (const message in listarr) {
-                    $('#scrollable').append(`<div class="message_layout" oncontextmenu=showOptsfor(${listarr[message].imei})  onclick=showMessages(${listarr[message].number},${listarr[message].imei})>
+
+                    $(`#${listarr[message].number}`).length == 0 ?
+                        $('#scrollable').append(`<div class="message_layout" oncontextmenu=showOptsfor(${listarr[message].number},${listarr[message].imei})  id='${listarr[message].number}' onclick=showMessages(${listarr[message].number},${listarr[message].imei})>
                     <div class="message_main">
                     <div class="user_img small"></div>
-                    <div class="message_data">
-                    <div class="sender">${listarr[message].number}</div>
+                    <div class="message_data" id='${listarr[message].number}_message_data'>
+                    <div class="sender" id='${listarr[message].number}_sender'>${listarr[message].number}</div>
                     <div class="message">
                     ${listarr[message].message}
                     </div>
                     <div class="message_footer">
-                    <div class="message_to">${listarr[message].imei}</div>
-                    <div class="date">July 19,2023 13:43</div>
+                    <div class="message_to" id='${listarr[message].number}_imei'>${listarr[message].imei}</div>
+                    <div class="date">${getDT(listarr[message].timestamp)}</div>
                     </div>
                     </div>
                     </div>
@@ -1228,6 +1256,15 @@ message-area
                     
                     <img src="<?php echo base_url() ?>assets/images/arrow.svg" width='15px' height="15px" class="simimg">
                     </div>
+                    </div>`) : $(`#${listarr[message].number}_message_data`).empty().append(`
+                    <div class="message_data" id='${listarr[message].number}_message_data'>
+                    <div class="sender" id='${listarr[message].number}_sender'>${listarr[message].number}</div>
+                    <div class="message">
+                    ${listarr[message].message}
+                    </div>
+                    <div class="message_footer">
+                    <div class="message_to" id='${listarr[message].number}_imei'>${listarr[message].imei}</div>
+                    <div class="date">${getDT(listarr[message].timestamp)}</div>
                     </div>`)
                 }
             }
@@ -1238,11 +1275,13 @@ message-area
 
             }
 
-            function showOptsfor(imei) {
+            function showOptsfor(number, imei) {
                 const menu = document.getElementById("menu");
-                event.preventDefault(); 
-                const delId = document.getElementById("deleteChatRef");
-                delId.value = imei
+                event.preventDefault();
+                const delImei = document.getElementById("deleteChatRefImei");
+                const delNumber = document.getElementById("deleteChatRefNumber");
+                delNumber.value = number
+                delImei.value = imei
                 menu.style.display = "block"; // show the menu
                 menu.style.left = event.pageX + "px"; // position the menu
                 menu.style.top = event.pageY + "px";
@@ -1250,18 +1289,25 @@ message-area
 
 
             $('#deleteChat').click((event) => {
-                event.preventDefault(); 
-                imei = $('#deleteChatRef').val()
+                const menu = document.getElementById("menu");
+                menu.style.display = "none"; // show the menu
+
+                event.preventDefault();
+                imei = $('#deleteChatRefImei').val()
+                number = $('#deleteChatRefNumber').val()
                 uidCall.then((uid) => {
                     const collectionRef = db.collection(`users/${uid}/imei/${imei}/messages`);
-                    
-                    const query = collectionRef.where("imei", "==", parseInt(imei));
-                    
+
+                    const query = collectionRef.where("number", "==", parseInt(number));
+
                     query.get().then((querySnapshot) => {
                         console.log(querySnapshot);
                         querySnapshot.forEach((doc) => {
                             doc.ref.delete().then(() => {
-                                console.log("Document successfully deleted!");
+                                $(`#${number}`).remove()
+                                $('#chatbox').attr('hidden', true)
+
+                                // console.log("Document successfully deleted!");
                             }).catch((error) => {
                                 console.error("Error removing document: ", error);
                             });
@@ -1271,7 +1317,9 @@ message-area
                     });
 
                 })
+
             })
+
 
             function sendNew() {
                 $.ajax({
@@ -1283,7 +1331,11 @@ message-area
                         "message": `${$('#messagenew').val()}`,
                         "type": 1
                     },
-                    success: $('.sendbox').empty()
+                    success: () => {
+                        $('.sendbox').empty()
+                        closeModal('modal_create_message')
+                        showMessages($('#reciepent').val(), $('#devices').val())
+                    }
                 });
             }
         </script>

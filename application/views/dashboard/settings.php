@@ -332,6 +332,12 @@
                 </div>
             </div>
             <div class="right" id='right'>
+            <div id="modal_loading">
+                <span id="loader" class="loader"></span>
+            </div>
+            <div id="modal_success" style="display:none">  
+            <span id="success" class="success" >Success</span>
+        </div>
                 <div class="modal_delete" id="modal_delete" style="display:none">
                     <div class="modal_container">
                         <div class="modal_head">
@@ -341,10 +347,28 @@
                             </div>
                         </div>
                         <div class="modal_main">
+                            <h3 class='red'>AFTER CONFIRMING YOUR DATA WILL BE DELETED FROM OUR SERVERS</h3>
                             <h5 class='red'>Please type <b>CONFIRM</b> to delete your account and data</h5>
                             <input id="confirm" type="text" placeholder="CONFIRM">
                             <div class="red" id="error"></div>
                             <button class="btn-red" id="deleteAccount" onclick="deleteAccount()">Delete My Account</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal_delete_confirmation" id="modal_delete_confirmation" style="display:none">
+                    <div class="modal_container">
+                        <div class="modal_head">
+                            <img src="<?php echo base_url() ?>assets/images/back.svg" onclick="closeModal('modal_delete_confirmation')" alt="" srcset="">
+                            <div class="modal_head_name">
+                                Delete Account
+                            </div>
+                        </div>
+                        <div class="modal_main">
+                            <h5 class='red'>To continue, Enter your credentials</h5>
+                            <input id="email" type="text" disabled>
+                            <input id="password" type="password" placeholder="Enter your password">
+                            <div class="red" id="errorConf"></div>
+                            <button class="btn-red" id="deleteAccountConfirm" onclick="deleteAccountConfirm()">Delete My Account</button>
                         </div>
                     </div>
                 </div>
@@ -355,6 +379,37 @@
         <script src="https://www.gstatic.com/firebasejs/8.0.0/firebase-auth.js"></script>
 
         <script>
+            async function getCreds() {
+                var fireb = firebase.auth.EmailAuthProvider.credential($('#email').val(), $('#password').val())
+                return fireb;
+
+
+            }
+            function deleteAccountConfirm() {
+                document.getElementById('modal_loading').style="display:block";
+                const user = firebase.auth().currentUser;
+                var c = getCreds().then((credentials) => {
+                    user.reauthenticateWithCredential(credentials)
+                    .then(function() {
+                        user.delete().then(function() {
+                            // User deleted successfully
+                            // Now delete related data from Firebase Database or Firestore
+                            var uid = user.uid;
+                            db.collection('users').doc(uid).delete();
+                            db.collection('imei').doc(uid).delete();
+                            logoutUser()
+                        }).catch(function(error) {
+                            $('#errorConf').empty().append("Failed to authenticate")
+                        });
+                    }).catch(function(error) {
+                        
+                        $('#errorConf').empty().append(error.message)
+                    });
+                    document.getElementById('modal_loading').style="display:none";
+                })
+
+            }
+
             showUserDetails()
             var loader = document.getElementById("preloader");
             window.addEventListener("load", function() {
@@ -363,33 +418,34 @@
             var db = firebase.firestore();
 
             function deleteAccount() {
-                firebase.auth().onAuthStateChanged(user => {
-                    if (user) {
-                        // showUserDetails(user)
-                    } else {
-                        window.location = ("<?php echo base_url() ?>login")
-
-                    }
-                })
                 if ($('#confirm').val() == "CONFIRM") {
-
                     const user = firebase.auth().currentUser;
                     var cook = getCookie()
-                    var credential = firebase.auth.GoogleAuthProvider.credential(cook.oauthIdToken, cook.oauthAccessToken);
-                    user.reauthenticateWithCredential(credential)
-                        .then(function() {
-                            user.delete().then(function() {
-                                // User deleted successfully
-                                // Now delete related data from Firebase Database or Firestore
-                                var uid = user.uid;
-                                db.collection('users').doc(uid).delete();
-                                db.collection('imei').doc(uid).delete();
-                                logoutUser()
-                            }).catch(function(error) {
-                                // An error happened
-                                console.log(error);
-                            });
-                        })
+                    if (cook != null) {
+                        var credential = firebase.auth.GoogleAuthProvider.credential(cook.oauthIdToken, cook.oauthAccessToken);
+                        user.reauthenticateWithCredential(credential)
+                            .then(function() {
+                                user.delete().then(function() {
+                                    // User deleted successfully
+                                    // Now delete related data from Firebase Database or Firestore
+                                    var uid = user.uid;
+                                    db.collection('users').doc(uid).delete();
+                                    db.collection('imei').doc(uid).delete();
+                                    logoutUser()
+                                }).catch(function(error) {
+                                    // An error happened
+                                    console.log(error);
+                                });
+                            })
+                    } else {
+                        console.log(`${$('#user_email').html()}`)
+                        $('#email').val(`${$('#user_email').html()}`);
+                        document.getElementById('modal_delete').style = "display:none";
+                        document.getElementById('modal_delete_confirmation').style = "display:block";
+
+                    }
+
+
 
 
 

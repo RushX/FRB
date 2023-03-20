@@ -11,10 +11,10 @@ function index(){
 
 function sendMessage(){
     $payload = array(
-        'imei' => $_POST['imei'],
-        'number'=> ($_POST['number']),
+        'imei' => (int)$_POST['imei'],
+        'number'=> (int)($_POST['number']),
         'message'=> $_POST['message'],
-        'type'=>$_POST['type']
+        'type'=>(int)($_POST['type'])
       );
     $this->load->model('Mqtt');
     $this->Mqtt->send($payload);

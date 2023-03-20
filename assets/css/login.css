@@ -22,7 +22,7 @@
     /* margin-left: auto;
     align-items: center; */
     margin: 0 auto;
-    width: 250px;
+    width: min-content;
     display: flex;
     flex-direction: column;
     gap: 20px;
@@ -48,7 +48,16 @@
     font-size: 16px;
     line-height: 20px;
   }
-
+  .fpwd {
+    letter-spacing: 0.005em;
+    text-decoration: none;
+    color: #575DFB;
+    font-family: 'Lato';
+    font-style: normal;
+    font-weight: 400;
+    font-size: 16px;
+    line-height: 20px;
+  }
   #loginbtn {
     border-radius: 16px;
     width: 343px;

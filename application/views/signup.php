@@ -18,7 +18,6 @@
       <input type="email" class="input" placeholder="Email" id="email">
       <input type="password" class="input" placeholder="Password" id="password">
       <span class="autherr" id="error"></span>
-      <a href="/forgot" id="fpwd">Forgot password?</a>
       <button type="submit" id="loginbtn">SignUp</button>
       <button class="ggl" id="loginggl">
         <img src="<?php echo base_url(); ?>/assets/images/google.svg" alt="" srcset="">
@@ -82,7 +81,7 @@
           name: res.user.displayName
         })
 
-        // window.location = ("<?php echo base_url() ?>dashboard")
+        window.location = ("<?php echo base_url() ?>dashboard")
       }).catch(e => {
         console.log(e)
       })
@@ -98,7 +97,7 @@
     function checkAuthState() {
       firebase.auth().onAuthStateChanged(user => {
         if (user) {
-          // window.location = ("<?php echo base_url() ?>dashboard")
+          window.location = ("<?php echo base_url() ?>dashboard")
         } else {}
       })
     }

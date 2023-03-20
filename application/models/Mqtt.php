@@ -17,7 +17,7 @@ class Mqtt extends CI_Model
         $clientId = "" . (rand(5, 15)) . "";
         $username = '1';
         $password = '';
-        $clean_session = false;
+        $clean_session = true;
         $mqtt_version = MqttClient::MQTT_3_1_1;
 
         $connectionSettings = (new ConnectionSettings)
@@ -26,7 +26,7 @@ class Mqtt extends CI_Model
             ->setKeepAliveInterval(60)
             ->setLastWillTopic('emqx/test/last-will')
             ->setLastWillMessage('client disconnect')
-            ->setLastWillQualityOfService(1);
+            ->setLastWillQualityOfService(0);
 
 
         $this->mqtt = new MqttClient($server, $port, $clientId, $mqtt_version);
@@ -42,13 +42,13 @@ class Mqtt extends CI_Model
 
         $this->mqtt->publish(
             // topic
-            "sms",
+            "unio_sms",
             json_encode($payload, JSON_UNESCAPED_SLASHES),
             // payload
             // qos
             0,
             // retain
-            true
+            false
         );
         echo "msg sent\n";
     }

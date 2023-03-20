@@ -18,7 +18,11 @@
       <input type="email" class="input" placeholder="Email" id="email">
       <input type="password" class="input" placeholder="Password" id="password">
       <span class="autherr" id="error"></span>
-      <a href="/forgot" id="fpwd">Forgot password?</a>
+      <div class="sp" style="display:flex;width:100%;justify-content:space-between">
+
+      <a href="<?php echo base_url()?>signup" class="fpwd">Signup</a>
+        <a href="<?php echo base_url()?>forgot" id="fpwd">Forgot password?</a>
+      </div>
       <button type="submit" id="loginbtn">Login</button>
       <button class="ggl" id="loginggl">
         <img src="<?php echo base_url(); ?>/assets/images/google.svg" alt="" srcset="">
@@ -58,6 +62,7 @@
       console.log(email, password)
       firebase.auth().signInWithEmailAndPassword(email, password)
         .then((res) => {
+        delete_cookie('oauth')
           document.cookie = `oauth=${JSON.stringify(res['credential'])}`
           // console.log(res['credential'])
           window.location = ("<?php echo base_url() ?>dashboard")
@@ -68,11 +73,13 @@
           document.getElementById("error").innerHTML = errorMessage;
         });
     }
-
+    var delete_cookie = function(name) {
+    document.cookie = name + '=;expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+};
     function GoogleLogin() {
       firebase.auth().signInWithPopup(provider).then(res => {
+        delete_cookie('oauth')
         document.cookie = `oauth=${JSON.stringify(res['credential'])}`
-        // console.log(res['credential'])
 
         window.location = ("<?php echo base_url() ?>dashboard")
       }).catch(e => {
